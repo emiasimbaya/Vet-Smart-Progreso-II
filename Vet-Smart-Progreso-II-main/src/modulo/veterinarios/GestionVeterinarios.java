@@ -96,7 +96,25 @@ public class GestionVeterinarios {
         grafoDisponibilidad.ocuparHorario(idVeterinario, especie, fecha, hora);
     }
 
+    public void cargarListaExterna(ArrayList<Veterinario> listaCargada) {
+        veterinarios.clear();
+        veterinariosPorId.clear();
+        for (Veterinario v : listaCargada) {
+            cargarVeterinario(v);
+        }
+    }
+
     public ArrayList<Veterinario> getVeterinarios() {
         return veterinarios;
     }
+
+    public String mostrarGrafoDisponibilidad() {
+        return grafoDisponibilidad.mostrarGrafo();
+    }
+
+    public String consultarHorariosOcupados(int idVeterinario, String fecha) {
+        return grafoDisponibilidad.horariosOcupados(idVeterinario, fecha);
+    }
+
 }
+

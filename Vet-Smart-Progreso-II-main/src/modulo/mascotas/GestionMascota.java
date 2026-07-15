@@ -179,4 +179,16 @@ public class GestionMascota {
             }
         }
     }
+
+    /** Metodo de recarga*/
+    public void cargarListaExterna(ArrayList<Mascota> listaCargada) {
+        mascotas.clear();
+        mascotasPorId.clear();
+        mascotasPorCliente.clear();
+        arbolMascotas.reconstruir(new ArrayList<>()); // limpia el árbol
+        for (Mascota m : listaCargada) {
+            cargarMascota(m);
+        }
+    }
+
 }

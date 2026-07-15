@@ -6,10 +6,15 @@ import modulo.clientes.GestionClientes;
 import modulo.citas.GestionCitas;
 import modulo.mascotas.GestionMascota;
 import modulo.veterinarios.GestionVeterinarios;
+import modulo.mascotas.ValidarMascota;
+import modulo.citas.ValidarCita;
+import persistencia.RepositorioDatos;
+import java.io.IOException;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 
 public class Ventana extends JFrame {
@@ -57,6 +62,19 @@ public class Ventana extends JFrame {
     private JTextField txtRaza;
     private JTextField txtVeterinarioCita;
     private JComboBox cmboEspecialidadCita;
+    private JButton btnGuardarClientes;
+    private JButton btnCargarClientes;
+    private JButton btnGuardarMascotas;
+    private JButton btnCargarMascotas;
+    private JButton button1;
+    private JButton btnGuardarCitas;
+    private JButton btnCargarCitas;
+    private JButton btnVerDisponibilidad;
+    private JButton button2;
+    private JButton btnGuardarCitaS;
+    private JButton btnCargarCitaS;
+    private JButton btnGuardarVet;
+    private JButton btnCargarVet;
     private GestionMascota sistemaMascotas;
     private GestionVeterinarios sistemaVeterinarios;
     private GestionClientes sistemaClientes;
@@ -119,6 +137,19 @@ public class Ventana extends JFrame {
 
                     int edad = Integer.parseInt(edadStr);
                     double peso = Double.parseDouble(pesoStr);
+
+                    if (!ValidarMascota.edadValida(edad)) {
+                        JOptionPane.showMessageDialog(null,
+                                "La edad debe estar entre 0 y 40 años.",
+                                "Edad inválida", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    if (!ValidarMascota.pesoValido(peso)) {
+                        JOptionPane.showMessageDialog(null,
+                                "El peso debe ser mayor a 0.",
+                                "Peso inválido", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
 
                     Mascota nuevaMascota = new Mascota(id, nombre, especie, edad, peso, raza, clienteExistente);
                     sistemaMascotas.agregarMascota(nuevaMascota);
@@ -306,11 +337,16 @@ public class Ventana extends JFrame {
                 String nombreVet = txtVeterinarioCita.getText().trim();
                 String especialidadRequerida = cmboEspecialidadCita.getSelectedItem().toString();
 
-                if (mascotaTexto.isEmpty() || fecha.isEmpty() || hora.isEmpty()
-                        || motivo.isEmpty() || nombreVet.isEmpty()) {
+                if (!ValidarCita.camposBasicosValidos(mascotaTexto, fecha, hora, motivo, prioridad)) {
                     JOptionPane.showMessageDialog(null,
                             "Por favor, completa todos los campos de la cita, incluyendo el veterinario.",
                             "Campos vacíos", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                if (!ValidarCita.prioridadValida(prioridad)) {
+                    JOptionPane.showMessageDialog(null,
+                            "La prioridad seleccionada no es válida.",
+                            "Prioridad inválida", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
 
@@ -321,6 +357,7 @@ public class Ventana extends JFrame {
                             "Mascota no encontrada", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
+
                 Mascota mascotaAsignada = sistemaMascotas.getMascota(indiceMascota);
 
                 int indiceVet = sistemaVeterinarios.buscarNombreSecuencial(nombreVet);
@@ -341,10 +378,14 @@ public class Ventana extends JFrame {
 
                 boolean disponible = sistemaVeterinarios.estaDisponible(vetAsignado.getId(), especialidadRequerida, fecha, hora);
                 if (!disponible) {
-                    JOptionPane.showMessageDialog(null,
-                            "El veterinario " + vetAsignado.getNombre() + " ya tiene una cita en esa fecha y hora.",
-                            "Horario ocupado", JOptionPane.WARNING_MESSAGE);
-                    return;
+                    int respuesta = JOptionPane.showConfirmDialog(null,
+                            "El veterinario " + vetAsignado.getNombre() + " ya tiene una cita en esa fecha y hora.\n" +
+                                    "¿Deseas agendarla de todas formas como una excepción (urgencia, caso especial, etc.)?",
+                            "Horario ocupado", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    if (respuesta != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                    motivo = motivo + " [EXCEPCIÓN: horario compartido]";
                 }
 
                 String codigo = "CT" + proximoIdCita;
@@ -759,6 +800,122 @@ public class Ventana extends JFrame {
                                 "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
+            }
+        });
+
+        btnGuardarClientes.addActionListener(e -> {
+            try {
+                RepositorioDatos.guardarDatos("clientes.dat", sistemaClientes.getClientes());
+                JOptionPane.showMessageDialog(null, "Clientes guardados correctamente.");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Error al guardar: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        btnCargarClientes.addActionListener(e -> {
+            try {
+                Object datos = RepositorioDatos.cargarDatos("clientes.dat");
+                if (datos instanceof ArrayList) {
+                    sistemaClientes.cargarListaExterna((ArrayList<Cliente>) datos);
+                    txtListarClientes.setText(sistemaClientes.listarTodos());
+                    JOptionPane.showMessageDialog(null, "Clientes cargados correctamente.");
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+                JOptionPane.showMessageDialog(null, "No se encontró un archivo guardado previamente.",
+                        "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
+        btnGuardarCitaS.addActionListener(e -> {
+            try {
+                RepositorioDatos.guardarDatos("citas.dat", sistemaCitas.getCitas());
+                JOptionPane.showMessageDialog(null, "Citas guardadas correctamente.");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Error al guardar: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        btnCargarCitaS.addActionListener(e -> {
+            try {
+                Object datos = RepositorioDatos.cargarDatos("citas.dat");
+                if (datos instanceof ArrayList) {
+                    sistemaCitas.cargarListaExterna((ArrayList<Cita>) datos);
+                    txtListarCitas.setText(sistemaCitas.listarTodos());
+                    JOptionPane.showMessageDialog(null, "Citas cargadas correctamente.");
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+                JOptionPane.showMessageDialog(null, "No se encontró un archivo guardado previamente.",
+                        "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
+        btnVerDisponibilidad.addActionListener(e -> {
+            String nombreVet = txtVeterinarioCita.getText().trim();
+            String fecha = TxtFecha.getText().trim();
+            if (nombreVet.isEmpty() || fecha.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Escribe el veterinario y la fecha primero.");
+                return;
+            }
+            int indiceVetDisp = sistemaVeterinarios.buscarNombreSecuencial(nombreVet);
+            if (indiceVetDisp == -1) {
+                JOptionPane.showMessageDialog(null, "Veterinario no encontrado.");
+                return;
+            }
+            Veterinario vDisp = sistemaVeterinarios.getVeterinario(indiceVetDisp);
+            String horarios = sistemaVeterinarios.consultarHorariosOcupados(vDisp.getId(), fecha);
+            JOptionPane.showMessageDialog(null, horarios, "Disponibilidad de " + vDisp.getNombre(), JOptionPane.INFORMATION_MESSAGE);
+        });
+
+
+        /** Mascotas*/
+        btnGuardarMascotas.addActionListener(e -> {
+            try {
+                RepositorioDatos.guardarDatos("mascotas.dat", sistemaMascotas.getMascotas());
+                JOptionPane.showMessageDialog(null, "Mascotas guardadas correctamente.");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Error al guardar: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        btnCargarMascotas.addActionListener(e -> {
+            try {
+                Object datos = RepositorioDatos.cargarDatos("mascotas.dat");
+                if (datos instanceof ArrayList) {
+                    sistemaMascotas.cargarListaExterna((ArrayList<Mascota>) datos);
+                    txtListarMascotas.setText(sistemaMascotas.listarOrdenadasPorArbol());
+                    JOptionPane.showMessageDialog(null, "Mascotas cargadas correctamente.");
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+                JOptionPane.showMessageDialog(null, "No se encontró un archivo guardado previamente.",
+                        "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
+        /** Veterinario*/
+        btnGuardarVet.addActionListener(e -> {
+            try {
+                RepositorioDatos.guardarDatos("veterinarios.dat", sistemaVeterinarios.getVeterinarios());
+                JOptionPane.showMessageDialog(null, "Veterinarios guardados correctamente.");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Error al guardar: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        btnCargarVet.addActionListener(e -> {
+            try {
+                Object datos = RepositorioDatos.cargarDatos("veterinarios.dat");
+                if (datos instanceof ArrayList) {
+                    sistemaVeterinarios.cargarListaExterna((ArrayList<Veterinario>) datos);
+                    txtAreaListarVet.setText(sistemaVeterinarios.listarTodos());
+                    JOptionPane.showMessageDialog(null, "Veterinarios cargados correctamente.");
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+                JOptionPane.showMessageDialog(null, "No se encontró un archivo guardado previamente.",
+                        "Aviso", JOptionPane.WARNING_MESSAGE);
             }
         });
     }

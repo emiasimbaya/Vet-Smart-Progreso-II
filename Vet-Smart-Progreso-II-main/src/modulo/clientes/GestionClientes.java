@@ -120,4 +120,15 @@ public class GestionClientes {
     public ArrayList<Cliente> getClientes() {
         return clientes;
     }
+
+
+    /** Metodo de recarga*/
+    public void cargarListaExterna(ArrayList<Cliente> listaCargada) {
+        clientes.clear();
+        clientesPorId.clear();
+        clientesPorCedula.clear();
+        for (Cliente c : listaCargada) {
+            cargarCliente(c);
+        }
+    }
 }

@@ -71,4 +71,13 @@ public class GestionCitas {
     public ArrayList<Cita> getCitas() {
         return citas;
     }
+
+    public void cargarListaExterna(ArrayList<Cita> listaCargada) {
+        citas.clear();
+        citasPorCodigo.clear();
+        colaPrioridad.clear();
+        for (Cita c : listaCargada) {
+            agregarCita(c);
+        }
+    }
 }

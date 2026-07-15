@@ -54,4 +54,32 @@ public class GrafoDisponibilidad implements Serializable {
         relaciones.putIfAbsent(idVeterinario, new ArrayList<>());
         relaciones.get(idVeterinario).add(new AristaDisponibilidad(idVeterinario, especie, fecha, hora, true));
     }
+
+    public String mostrarGrafo() {
+        StringBuilder sb = new StringBuilder();
+        for (Integer idVet : relaciones.keySet()) {
+            Veterinario v = veterinarios.get(idVet);
+            sb.append("Veterinario: ").append(v != null ? v.getNombre() : idVet).append("\n");
+            for (AristaDisponibilidad arista : relaciones.get(idVet)) {
+                sb.append("   -> Especie: ").append(arista.getEspecie())
+                        .append(" | Fecha: ").append(arista.getFecha())
+                        .append(" | Hora: ").append(arista.getHora())
+                        .append(" | Ocupado: ").append(arista.isOcupado() ? "Sí" : "No")
+                        .append("\n");
+            }
+        }
+        return sb.length() != 0 ? sb.toString() : "El grafo no tiene relaciones registradas";
+    }
+
+    public String horariosOcupados(int idVeterinario, String fecha) {
+        List<AristaDisponibilidad> lista = relaciones.get(idVeterinario);
+        if (lista == null) return "No hay información de horarios para este veterinario.";
+        StringBuilder sb = new StringBuilder();
+        for (AristaDisponibilidad arista : lista) {
+            if (arista.getFecha().equalsIgnoreCase(fecha) && arista.isOcupado()) {
+                sb.append("Hora ocupada: ").append(arista.getHora()).append("\n");
+            }
+        }
+        return sb.length() != 0 ? sb.toString() : "El veterinario está libre todo el día " + fecha;
+    }
 }
